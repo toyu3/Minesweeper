@@ -1,115 +1,285 @@
-import de.bezier.guido.*;
-//Declare and initialize constants NUM_ROWS and NUM_COLS = 20
-private final static int NUM_ROWS = 20;
-private final static int NUM_COLS = 20;
-private MSButton[][] buttons; //2d array of minesweeper buttons
-private ArrayList <MSButton> mines; //ArrayList of just the minesweeper buttons that are mined
+private TheBoard b;
+private Boolean gameOver = false;
+private int bombCount = 0;
+public static final int BOMBAMOUNT = 50;
+private boolean firstClick = true;
+//Creates the game boeard
+public class TheBoard{
+  private MSButton[][] buttons = new MSButton[25][25]; 
+  public TheBoard(){
+    bombCount=1;
+    for(int i = 0; i<buttons.length; i++){
+      for(int a = 0; a<buttons[i].length; a++){
+        buttons[i][a] = new MSButton(i*(MSButton.theLength),a*(MSButton.theLength), "");
+      }
+    }
+  }
 
-void setup ()
-{
-    size(400, 400);
-    textAlign(CENTER,CENTER);
-    
-    // make the manager
-    Interactive.make( this );
-    
-    //your code to initialize buttons goes here
-    buttons = new MSButton[NUM_ROWS][NUM_COLS];
-    for(int r = 0; r < NUM_ROWS; r++){
-        for(int c = 0; c < NUM_COLS; c++){
-            buttons[r][c] = new MSButton(r, c);
+  public void genBoard(){
+    bombCount=0;
+    for(int i = 0; i<buttons.length; i++){
+      for(int a = 0; a<buttons[i].length; a++){
+        buttons[i][a] = new MSButton(i*(MSButton.theLength),a*(MSButton.theLength), "");
+      }
+    }
+    for(int i = 0; i<BOMBAMOUNT; i++){
+      int r = (int) (Math.random()*buttons.length);
+      int c = (int) (Math.random()*buttons.length);
+      if(buttons[r][c].getValue().equals("B") || buttons[r][c].checkGen()){
+        i--;
+        continue;
+      }
+      buttons[r][c] = new MSButton(r*MSButton.theLength,c*MSButton.theLength, "B");
+      bombCount++;
+      for(int a=-1; a<=1; a++){
+        for(int b=-1; b<=1; b++){
+          try {//1
+            buttons[r+a][c+b].addValue();
+          } catch (Throwable e) { 
+          }
         }
+      }      
     }
-    
-    
-    setMines();
-}
-public void setMines()
-{
-    //your code
+  }
+
+  public void checkClick(){
+    for(int i = 0; i<buttons.length; i++){
+      for(int a = 0; a<buttons[i].length; a++){
+        buttons[i][a].setPressed(buttons,i,a);
+      }
+    }
+  }
+
+  public void checkFlag(){
+    for(MSButton[] array: buttons){
+      for(MSButton c : array){
+        c.setFlag();
+      }
+    }
+  }
+
+  public void drawBoard(){
+    for(MSButton[] array: buttons){
+      for(MSButton c : array){
+        c.hoverOff();
+        c.checkHover();
+        c.drawButton();
+      }
+    }
+  }
 }
 
-public void draw ()
-{
-    background( 0 );
-    if(isWon() == true)
-        displayWinningMessage();
-}
-public boolean isWon()
-{
-    //your code here
+public class MSButton{
+  private int x;
+  private int y;
+  public static final int theLength = 24;
+  private int val = 0;
+  private String theText="";
+  private boolean isPressed = false;
+  private boolean isFlagged = false;
+  private boolean isHover = false;
+  color c = color(224, 224, 224);
+  color str = color(0, 0, 0);
+  //instantiates at x and y
+  public MSButton(int x, int y, String theText){
+    this.x=x;
+    this.y=y;
+    this.theText = theText;
+  }
+
+  //checks if mouse is on button
+  public boolean checkMouse(){
+    if(mouseX>x && mouseY>y && mouseX<x+theLength && mouseY<y+theLength)
+      return true;
     return false;
-}
-public void displayLosingMessage()
-{
-    //your code here
-}
-public void displayWinningMessage()
-{
-    //your code here
-}
-public boolean isValid(int r, int c)
-{
-    //your code here
+  }
+
+  public boolean checkGen(){
+    if(mouseX>(x-theLength) && mouseY>(y-theLength) && mouseX<(x+2*theLength) && mouseY<(y+2*theLength))
+      return true;
     return false;
-}
-public int countMines(int row, int col)
-{
-    int numMines = 0;
-    //your code here
-    return numMines;
-}
-public class MSButton
-{
-    private int myRow, myCol;
-    private float x,y, width, height;
-    private boolean clicked, flagged;
-    private String myLabel;
-    
-    public MSButton ( int row, int col )
-    {
-        width = 400/NUM_COLS;
-        height = 400/NUM_ROWS;
-        myRow = row;
-        myCol = col; 
-        x = myCol*width;
-        y = myRow*height;
-        myLabel = "";
-        flagged = clicked = false;
-        Interactive.add( this ); // register it with the manager
+  }
+
+  public void setText(String theText){
+    this.theText = theText;
+  }
+
+
+  public void setColor(int r, int g, int b){
+    this.c = color(r, g, b);
+  }
+
+
+  public void setStroke(int r, int g, int b){
+    this.str = color(r, g, b);
+  }
+
+  public void addValue(){
+    val++;
+    if(!theText.equals("B"))
+      theText = "" + val;
+  }
+
+  public void drawButton(){
+    //draws rect
+    stroke(1);
+    if(!isPressed && !isHover){
+      setColor(0,0,0);
+      setStroke(0,0,0);
     }
 
-    // called by manager
-    public void mousePressed () 
-    {
-        clicked = true;
-        //your code here
-    }
-    public void draw () 
-    {    
-        if (flagged)
-            fill(0);
-        // else if( clicked && mines.contains(this) ) 
-        //     fill(255,0,0);
-        else if(clicked)
-            fill( 200 );
-        else 
-            fill( 100 );
+    fill(c);
+    stroke(str);
+    rect(x,y,theLength,theLength);
 
-        rect(x, y, width, height);
-        fill(0);
-        text(myLabel,x+width/2,y+height/2);
+    if(gameOver){
+      isPressed = true;
+      setColor(0,0,0);
+      setStroke(0,255,0);
     }
-    public void setLabel(String newLabel)
-    {
-        myLabel = newLabel;
+
+    if(isFlagged){
+      noStroke();
+      fill(139,69,19);
+      rect(x+theLength/3.5, y+theLength/2, theLength/6.25, theLength/2);
+      fill(165,42,42);
+      rect(x+theLength/3.5, y+theLength/3.5, theLength/2, theLength/3.1);
     }
-    public void setLabel(int newLabel)
-    {
-        myLabel = ""+ newLabel;
+
+    if(isPressed){
+      fill(255);
+      textSize(theLength/1.5);
+      text(theText,x+theLength/2,y+theLength/2);
     }
-    public boolean isFlagged()
-    {
-        return flagged;
+  }
+
+  public void checkHover(){
+    if(checkMouse() && !isPressed){
+      isHover = true;
+      setColor(200,200,200);
+      setStroke(200,200,200);
     }
+  }
+
+  public void hoverOff(){
+    isHover = false;
+  }
+
+  public void spreadPress(MSButton[][] buttons, int i, int a){
+    if (!isPressed && !isFlagged){
+      isPressed=true;
+      setColor(0,0,0);
+      setStroke(0,255,0);
+      if(theText.equals("")){
+        for(int g=-1; g<=1; g++){
+          for(int b=-1; b<=1; b++){
+            try {//1
+              buttons[i+g][a+b].spreadPress(buttons, i+g,a+b);
+            } catch (Throwable e) { 
+            }
+          }
+        }
+      }
+    }
+  }
+
+  public void setPressed(MSButton[][] buttons, int i, int a){
+    if(checkMouse() && !isPressed && !isFlagged){
+      isPressed = true;
+      setColor(0,0,0);
+      setStroke(25,0,255);
+      if(theText.equals("B")){
+        gameOver=true;
+      } else if (theText.equals("")){
+        for(int g=-1; g<=1; g++){
+          for(int b=-1; b<=1; b++){
+            try {//1
+              buttons[i+g][a+b].spreadPress(buttons, i+g,a+b);
+            } catch (Throwable e) { 
+            }
+          }
+        }
+      }
+    }
+  }
+
+  public void setFlag(){
+    if(checkMouse() && !isPressed && !isFlagged){
+      isFlagged=true;
+      if(theText.equals("B")){
+        bombCount--;
+      } else {
+        bombCount++;
+      }
+    } else if(checkMouse() && !isPressed && isFlagged){
+      isFlagged=false;
+      if(theText.equals("B"))
+        bombCount++;
+      else
+        bombCount--;
+    }
+  }
+
+  public String getValue(){
+    return theText;
+  }
+}
+
+void setup (){
+    size(600, 600);
+    textAlign(CENTER,CENTER);
+    //rectMode(CENTER);   
+    b=new TheBoard(); 
+}
+
+
+public void draw (){
+    background(0);
+    b.drawBoard();
+
+    if(bombCount==0){
+      gameOver=true;
+      fill(102,255,102);
+      stroke(10);
+      textAlign(CENTER,CENTER);
+      textSize(80);
+      text("YOU WIN", width/2,height/2);
+      textSize(20);
+      text("click to restart", width/2,height/2+height/6);
+    } else if(gameOver){
+      fill(255,255,255);
+      stroke(10);
+      textAlign(CENTER,CENTER);
+      textSize(80);
+      text("YOU LOSE", width/2,height/2);
+      textSize(20);
+      text("click to restart", width/2,height/2+height/6);
+    }
+}
+
+void mouseClicked() {
+  if (mouseButton == LEFT) {
+    if(firstClick){
+      firstClick=false;
+      b.genBoard();
+    }
+
+    if(!gameOver){
+      b.checkClick();
+    }else{
+      b=new TheBoard(); 
+      gameOver=false;
+      firstClick=true;
+    }
+
+  } else if (mouseButton == RIGHT) {
+    if(!gameOver && !firstClick){
+      b.checkFlag();
+  }else{
+      b=new TheBoard(); 
+      gameOver=false;
+      firstClick=true;
+    }
+
+  }
 }
