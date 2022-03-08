@@ -3,7 +3,6 @@ private Boolean gameOver = false;
 private int bombCount = 0;
 public static final int BOMBAMOUNT = 50;
 private boolean firstClick = true;
-//Creates the game boeard
 public class TheBoard{
   private MSButton[][] buttons = new MSButton[25][25]; 
   public TheBoard(){
