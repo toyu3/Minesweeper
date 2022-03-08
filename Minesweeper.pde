@@ -86,8 +86,7 @@ public class MSButton {
     this.y=y;
     this.theText = theText;
   }
-
-  //checks if mouse is on button
+  
   public boolean checkMouse() {
     if (mouseX>x && mouseY>y && mouseX<x+theLength && mouseY<y+theLength)
       return true;
